@@ -1,0 +1,4 @@
+langchainlanggraph
+langchain-groqgroq
+docker
+pydanticrich
