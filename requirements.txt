@@ -2,3 +2,5 @@ langchain
 langgraph
 langchain-groq
 docker
+langchain-ollama
+dotenv
