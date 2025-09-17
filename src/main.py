@@ -1,11 +1,18 @@
 from utils.logger import logger
 from utils.docker_logs_extract import stream_container_logs
-import os
 from task_executor import run_agent
+from task_extractor import task_extractor
+
 
 def main():
     for log in stream_container_logs("book-service"):
-        print(log.decode('utf-8'), end='')
-        run_agent(log.decode('utf-8'))
-if __name__ == '__main__':
+        log_string = log.decode("utf-8")
+        print(log_string, end="")
+        task = task_extractor(log_string)
+        if task == None:
+            continue
+        run_agent(task)
+
+
+if __name__ == "__main__":
     main()
