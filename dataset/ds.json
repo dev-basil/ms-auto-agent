@@ -1,0 +1,67 @@
+[
+    {
+        "instruction": "Identify if there is any error in the given log. If there is error, provide the action to resolve the error.",
+        "input": "Error: Error fetching stock for book.",
+        "output": "Restart the 'book-stock-service' microservice."
+    },
+    {
+        "instruction": "Identify if there is any error in the given log. If there is error, provide the action to resolve the error.",
+        "input": "Error: Connection refused when calling pricing-service at http://pricing-service:8080/api/v1/prices.",
+        "output": "Verify pricing-service pod is running and reachable; if down, redeploy or restart the 'pricing-service' microservice."
+    },
+    {
+        "instruction": "Identify if there is any error in the given log. If there is error, provide the action to resolve the error.",
+        "input": "Error: NullPointerException in OrderProcessor.calculateTotals at line 142 (order-service).",
+        "output": "Add null checks for order line items in OrderProcessor.calculateTotals and redeploy the 'order-service' after patching."
+    },
+    {
+        "instruction": "Identify if there is any error in the given log. If there is error, provide the action to resolve the error.",
+        "input": "Error: java.lang.OutOfMemoryError: Java heap space (catalog-service).",
+        "output": "Increase JVM heap memory limits and restart the 'catalog-service' microservice."
+    },
+    {
+        "instruction": "Identify if there is any error in the given log. If there is error, provide the action to resolve the error.",
+        "input": "Error: could not connect to database postgres://db:5432 (ECONNREFUSED) in user-service.",
+        "output": "Ensure the Postgres database is running and reachable; fix DB config and restart the 'user-service'."
+    },
+    {
+        "instruction": "Identify if there is any error in the given log. If there is error, provide the action to resolve the error.",
+        "input": "Error: SSLHandshakeException when calling payment-service at https://payment-service/api/v1/charge.",
+        "output": "Update TLS certificates/truststore and restart the 'payment-service' and its clients."
+    },
+    {
+        "instruction": "Identify if there is any error in the given log. If there is error, provide the action to resolve the error.",
+        "input": "Error: TimeoutException after 3000ms when calling http://notification-service:9000/api/v1/send.",
+        "output": "Increase client timeout and verify 'notification-service' health; restart if necessary."
+    },
+    {
+        "instruction": "Identify if there is any error in the given log. If there is error, provide the action to resolve the error.",
+        "input": "Error: Deadlock found when trying to get lock; try restarting transaction (order-service).",
+        "output": "Implement retry-on-deadlock and redeploy the 'order-service'."
+    },
+    {
+        "instruction": "Identify if there is any error in the given log. If there is error, provide the action to resolve the error.",
+        "input": "Error: Kafka broker at kafka:9092 unreachable (ECONNREFUSED) in event-service.",
+        "output": "Restore Kafka broker availability and restart the 'event-service' to re-connect."
+    },
+    {
+        "instruction": "Identify if there is any error in the given log. If there is error, provide the action to resolve the error.",
+        "input": "Fetching stock for book 2 from book-stock-service.",
+        "output": "No error detected."
+    },
+    {
+        "instruction": "Identify if there is any error in the given log. If there is error, provide the action to resolve the error.",
+        "input": "Fetched stock for book 12 from book-stock-service.",
+        "output": "No error detected."
+    },
+    {
+        "instruction": "Identify if there is any error in the given log. If there is error, provide the action to resolve the error.",
+        "input": "Price cache refreshed successfully in pricing-service.",
+        "output": "No error detected."
+    },
+    {
+        "instruction": "Identify if there is any error in the given log. If there is error, provide the action to resolve the error.",
+        "input": "Order 98765 processed successfully by order-service.",
+        "output": "No error detected."
+    }
+]
