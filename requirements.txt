@@ -4,3 +4,5 @@ langchain-groq
 docker
 langchain-ollama
 dotenv
+transformers
+torch

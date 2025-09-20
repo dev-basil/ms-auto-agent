@@ -1,7 +1,7 @@
 from utils.logger import logger
 from utils.docker_logs_extract import stream_container_logs
 from task_executor import run_agent
-from task_extractor import task_extractor
+from task_extractor2 import task_extractor
 
 
 def main():
