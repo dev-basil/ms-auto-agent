@@ -6,3 +6,7 @@ langchain-ollama
 dotenv
 transformers
 torch
+sentencepiece
+protobuf
+accelerate
+bitsandbytes
