@@ -14,3 +14,6 @@ sentence-transformers==5.2.0
 faiss-cpu==1.13.1
 langchain-community==0.4.1
 langchain-huggingface==1.2.0
+fastapi
+uvicorn
+websockets

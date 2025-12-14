@@ -6,7 +6,7 @@ from agent_tools import tools
 from typing import Any
 memory = MemorySaver()
 
-# worked deepseek-r1-distill-llama-70b
+# working on deepseek-r1-distill-llama-70b
 # groq:openai/gpt-oss-120b
 # groq:llama-3.1-8b-instant
 agent_executor = create_react_agent(model, tools, checkpointer=memory)
