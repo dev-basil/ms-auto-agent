@@ -13,4 +13,4 @@ if use_ollama:
         temperature=float(os.getenv("OLLAMA_TEMPERATURE", "0"))
     )
 else:
-    model = init_chat_model(os.getenv("GROQ_MODEL", "groq:openai/gpt-oss-120b"))
+    model = init_chat_model("groq:openai/gpt-oss-120b")
