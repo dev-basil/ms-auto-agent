@@ -1,7 +1,7 @@
 import asyncio
 import time
 import uuid
-from typing import List, Dict
+from typing import List, Dict, Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -36,7 +36,7 @@ class ConnectionManager:
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
 
-    async def broadcast(self, message: dict):
+    async def broadcast(self, message: Any):
         for connection in self.active_connections:
             try:
                 await connection.send_json(message)
@@ -48,11 +48,30 @@ action_manager = ConnectionManager()
 
 # State
 pending_actions: Dict[str, Dict] = {}  # id -> {text, count, ...}
-# We use a simple hash of the action text to detect duplicates or just exact string match
 action_text_to_id: Dict[str, str] = {}
 
 class ActionRequest(BaseModel):
     action_id: str
+
+async def run_agent_and_broadcast(action_id: str, task: str):
+    print(f"Executing action {action_id}: {task}")
+    
+    # Optional: Send "Processing" status if needed, but frontend can infer from approve click
+    
+    # Run Agent (Blocking/Sync code running in thread)
+    try:
+        result = await asyncio.to_thread(run_agent, task)
+    except Exception as e:
+        result = f"Error executing action: {e}"
+        
+    print(f"Action {action_id} completed. Result: {result}")
+    
+    # Broadcast Result
+    await action_manager.broadcast({
+        "type": "result",
+        "actionId": action_id,
+        "result": str(result)
+    })
 
 @app.websocket("/ws/logs")
 async def websocket_logs(websocket: WebSocket):
@@ -67,7 +86,10 @@ async def websocket_logs(websocket: WebSocket):
 async def websocket_actions(websocket: WebSocket):
     await action_manager.connect(websocket)
     # Send current state on connect
-    await websocket.send_json(list(pending_actions.values()))
+    await websocket.send_json({
+        "type": "list",
+        "actions": list(pending_actions.values())
+    })
     try:
         while True:
             await websocket.receive_text()
@@ -78,18 +100,22 @@ async def websocket_actions(websocket: WebSocket):
 async def approve_action(action_id: str, background_tasks: BackgroundTasks):
     if action_id in pending_actions:
         action = pending_actions.pop(action_id)
-        # Execute in background
-        background_tasks.add_task(run_agent, action["text"])
         
         # Remove from mapping
-        # Find key by value (inefficient but safe for small dicts)
         for k, v in list(action_text_to_id.items()):
             if v == action_id:
                 del action_text_to_id[k]
                 break
         
-        # Broadcast update
-        await action_manager.broadcast(list(pending_actions.values()))
+        # Broadcast update (Action removed from list)
+        await action_manager.broadcast({
+            "type": "list",
+            "actions": list(pending_actions.values())
+        })
+        
+        # Execute in background
+        background_tasks.add_task(run_agent_and_broadcast, action_id, action["text"])
+        
         return {"status": "approved", "action": action["text"]}
     return {"status": "not_found"}
 
@@ -103,7 +129,10 @@ async def reject_action(action_id: str):
                 del action_text_to_id[k]
                 break
                 
-        await action_manager.broadcast(list(pending_actions.values()))
+        await action_manager.broadcast({
+            "type": "list",
+            "actions": list(pending_actions.values())
+        })
         return {"status": "rejected"}
     return {"status": "not_found"}
 
@@ -116,8 +145,6 @@ async def log_worker():
     while True:
         await asyncio.sleep(2)
         try:
-            # We run the blocking docker call in a thread if needed, 
-            # but for now let's hope it's fast enough or use asyncio.to_thread
             logs_bytes = await asyncio.to_thread(get_logs_since, "book-service", last_ts)
             
             if not logs_bytes:
@@ -137,8 +164,6 @@ async def log_worker():
                     continue
                 
                 ts_str, content = parts[0], parts[1]
-                
-                # Use existing parser
                 current_log_ts = parse_docker_timestamp(ts_str)
                 
                 if current_log_ts > last_ts:
@@ -150,20 +175,16 @@ async def log_worker():
             
             if batch_content:
                 log_string = "\n".join(batch_content)
-                # Broadcast logs
                 await log_manager.broadcast({"logs": log_string})
                 
-                # Run Task Extractor
                 task = await asyncio.to_thread(task_extractor, log_string)
                 if task:
                     print(f"Task found: {task}")
-                    # Update Actions
                     if task in action_text_to_id:
-                        # Existing action, increment count
                         existing_id = action_text_to_id[task]
                         pending_actions[existing_id]["count"] += 1
+                        pending_actions[existing_id]["timestamp"] = time.time() # Update timestamp
                     else:
-                        # New action
                         new_id = str(uuid.uuid4())
                         action_text_to_id[task] = new_id
                         pending_actions[new_id] = {
@@ -173,11 +194,15 @@ async def log_worker():
                             "timestamp": time.time()
                         }
                     
-                    # Broadcast updated actions
-                    await action_manager.broadcast(list(pending_actions.values()))
+                    await action_manager.broadcast({
+                        "type": "list",
+                        "actions": list(pending_actions.values())
+                    })
 
         except Exception as e:
             print(f"Error in log worker: {e}")
+            # Prevent rapid loops on error
+            await asyncio.sleep(5)
 
 @app.on_event("startup")
 async def startup_event():

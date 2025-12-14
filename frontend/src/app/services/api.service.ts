@@ -1,13 +1,17 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 export interface Action {
   id: string;
   text: string;
   count: number;
   timestamp: number;
+}
+
+export interface ActionResult {
+  actionId: string;
+  result: string;
 }
 
 @Injectable({
@@ -22,6 +26,9 @@ export class ApiService {
 
   private actionsSubject = new Subject<Action[]>();
   public actions$ = this.actionsSubject.asObservable();
+
+  private actionResultSubject = new Subject<ActionResult>();
+  public actionResult$ = this.actionResultSubject.asObservable();
 
   constructor(private http: HttpClient) {
     this.connectLogStream();
@@ -50,9 +57,20 @@ export class ApiService {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (Array.isArray(data)) {
+
+        if (data.type === 'list' && Array.isArray(data.actions)) {
           // Sort by latest first
-          data.sort((a, b) => b.timestamp - a.timestamp);
+          const list = data.actions;
+          list.sort((a: Action, b: Action) => b.timestamp - a.timestamp);
+          this.actionsSubject.next(list);
+        } else if (data.type === 'result') {
+          this.actionResultSubject.next({
+            actionId: data.actionId,
+            result: data.result
+          });
+        } else if (Array.isArray(data)) {
+          // Fallback for legacy format if any
+          data.sort((a: Action, b: Action) => b.timestamp - a.timestamp);
           this.actionsSubject.next(data);
         }
       } catch (e) {

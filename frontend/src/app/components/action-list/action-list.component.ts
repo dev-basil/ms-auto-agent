@@ -3,6 +3,14 @@ import { CommonModule } from '@angular/common';
 import { ApiService, Action } from '../../services/api.service';
 import { Subscription } from 'rxjs';
 
+interface ProcessingAction {
+  id: string;
+  text: string;
+  timestamp: number;
+  status: 'loading' | 'completed';
+  result?: string;
+}
+
 @Component({
   selector: 'app-action-list',
   standalone: true,
@@ -14,7 +22,25 @@ import { Subscription } from 'rxjs';
         <span class="count-badge" *ngIf="actions.length > 0">{{ actions.length }} pending</span>
       </div>
       <div class="action-list">
-        <div *ngIf="actions.length === 0" class="empty-state">
+        
+        <!-- Processing Actions Area -->
+        <div class="processing-section" *ngIf="processingActions.length > 0">
+           <div class="action-card processing-card" *ngFor="let pAction of processingActions">
+              <div class="card-header">
+                 <span class="status-icon" *ngIf="pAction.status === 'loading'">⏳ Executing...</span>
+                 <span class="status-icon success" *ngIf="pAction.status === 'completed'">✅ Completed</span>
+              </div>
+              <div class="card-content">
+                 <p>{{ pAction.text }}</p>
+                 <div class="result-box" *ngIf="pAction.status === 'completed'">
+                    <strong>Result:</strong> {{ pAction.result }}
+                 </div>
+              </div>
+           </div>
+           <hr *ngIf="actions.length > 0" class="divider">
+        </div>
+
+        <div *ngIf="actions.length === 0 && processingActions.length === 0" class="empty-state">
            <svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48" fill="#30363d"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>
            <p>All clear! No errors detected.</p>
         </div>
@@ -33,7 +59,7 @@ import { Subscription } from 'rxjs';
             </div>
             <div class="actions">
               <button class="btn-reject" (click)="onReject(action.id)">Reject</button>
-              <button class="btn-approve" (click)="onApprove(action.id)">Approve</button>
+              <button class="btn-approve" (click)="onApprove(action)">Approve</button>
             </div>
           </div>
         </div>
@@ -152,11 +178,47 @@ import { Subscription } from 'rxjs';
     .btn-approve:hover {
       background-color: #1a7f37;
     }
+    
+    .processing-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .processing-card {
+      border-color: #0969da;
+      background-color: #f0f8ff;
+    }
+    .status-icon {
+      font-weight: 600;
+      color: #0969da;
+    }
+    .status-icon.success {
+      color: #1a7f37;
+    }
+    .result-box {
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      background: #ffffff;
+      border: 1px solid #d0d7de;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+    }
+    .divider {
+      border: 0;
+      border-top: 1px solid #d0d7de;
+      margin: 0.5rem 0;
+    }
   `]
 })
 export class ActionListComponent implements OnInit, OnDestroy {
   actions: Action[] = [];
+  processingActions: ProcessingAction[] = [];
+
   sub!: Subscription;
+  resultSub!: Subscription;
 
   constructor(private api: ApiService) { }
 
@@ -164,10 +226,31 @@ export class ActionListComponent implements OnInit, OnDestroy {
     this.sub = this.api.actions$.subscribe(actions => {
       this.actions = actions;
     });
+
+    this.resultSub = this.api.actionResult$.subscribe(result => {
+      const pAction = this.processingActions.find(p => p.id === result.actionId);
+      if (pAction) {
+        pAction.status = 'completed';
+        pAction.result = result.result;
+
+        // Optionally remove after delay
+        // setTimeout(() => {
+        //   this.processingActions = this.processingActions.filter(p => p.id !== result.actionId);
+        // }, 10000);
+      }
+    });
   }
 
-  onApprove(id: string) {
-    this.api.approveAction(id).subscribe();
+  onApprove(action: Action) {
+    // Move to processing
+    this.processingActions.unshift({
+      id: action.id,
+      text: action.text,
+      timestamp: action.timestamp,
+      status: 'loading'
+    });
+
+    this.api.approveAction(action.id).subscribe();
   }
 
   onReject(id: string) {
@@ -176,5 +259,6 @@ export class ActionListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.sub) this.sub.unsubscribe();
+    if (this.resultSub) this.resultSub.unsubscribe();
   }
 }

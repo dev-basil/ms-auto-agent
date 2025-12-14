@@ -11,15 +11,16 @@ class ServiceInput(BaseModel):
 
 
 @tool("restart-service-tool", args_schema=ServiceInput, return_direct=True)
-def restart_service(a: str) -> bool:
+def restart_service(a: str) -> str:
     """Restart the given service (Docker container) by name."""
     try:
         client = docker.from_env()
         try:
             container = client.containers.get(a)
         except NotFound:
-            print(f"Container '{a}' not found.")
-            return False
+            msg = f"Container '{a}' not found."
+            print(msg)
+            return f"Error: {msg}"
 
         print(f"Restarting service {a} ...")
         container.restart(timeout=10)
@@ -28,17 +29,22 @@ def restart_service(a: str) -> bool:
         while time.time() < deadline:
             container.reload()
             if container.status == "running":
-                print(f"Service {a} restarted successfully.")
-                return True
+                msg = f"Service {a} restarted successfully."
+                print(msg)
+                return f"Success: {msg}"
             time.sleep(0.5)
-        print(f"Service {a} restart timed out (status: {container.status}).")
-        return False
+        
+        msg = f"Service {a} restart timed out (status: {container.status})."
+        print(msg)
+        return f"Error: {msg}"
     except APIError as e:
-        print(f"Docker API error while restarting '{a}': {e}")
-        return False
+        msg = f"Docker API error while restarting '{a}': {e}"
+        print(msg)
+        return f"Error: {msg}"
     except Exception as e:
-        print(f"Error restarting '{a}': {e}")
-        return False
+        msg = f"Error restarting '{a}': {e}"
+        print(msg)
+        return f"Error: {msg}"
 
 
 tools = [restart_service]

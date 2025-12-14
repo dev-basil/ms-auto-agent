@@ -18,7 +18,13 @@ def run_agent(task:str):
                     Execute the the below task using the tools available.
                     Task: {task}
                     """}
+    last_message = None
     for step in agent_executor.stream(
         {"messages": [input_message]}, config, stream_mode="values"
     ):
         step["messages"][-1].pretty_print()
+        last_message = step["messages"][-1]
+    
+    if last_message:
+        return last_message.content
+    return "Action executed with no output."
