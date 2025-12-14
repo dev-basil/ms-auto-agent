@@ -1,8 +1,8 @@
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import ToolMessage
-from model import model
-from agent_tools import tools
+from .model import model
+from .agent_tools import tools
 
 from typing import Any
 memory = MemorySaver()

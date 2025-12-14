@@ -1,3 +1,4 @@
 *.pyc
 .env
 finetune_model
+model

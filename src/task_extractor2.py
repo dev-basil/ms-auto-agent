@@ -1,7 +1,7 @@
 import os
 import torch
 from transformers import LlamaForCausalLM, LlamaTokenizer
-from rag_manager import RAGManager
+from .rag_manager import RAGManager
 
 MODEL_PATH = os.getenv("MODEL_PATH")
 if not MODEL_PATH:

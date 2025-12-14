@@ -7,11 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # Import existing logic
-from utils.logger import logger
-from utils.docker_logs_extract import get_logs_since
-from task_executor import run_agent
-from task_extractor2 import task_extractor
-from main import parse_docker_timestamp
+from .utils.logger import logger
+from .utils.docker_logs_extract import get_logs_since
+from .task_executor import run_agent
+from .task_extractor2 import task_extractor
+from .main import parse_docker_timestamp
 
 app = FastAPI()
 
