@@ -1,0 +1,36 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+}
+
+.app-header {
+  flex: 0 0 auto;
+}
+
+.main-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.split-pane {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.pane {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+.left-pane {
+  border-right: 1px solid #d0d7de;
+}
+
+.right-pane {
+  background-color: #f6f8fa;
+}
