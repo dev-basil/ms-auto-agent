@@ -1,5 +1,6 @@
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import ToolMessage
 from model import model
 from agent_tools import tools
 
@@ -14,17 +15,32 @@ config: Any = {"configurable": {"thread_id": "abc123"}}
 
 
 def run_agent(task:str):
-    input_message = {"role": "user", "content": f"""
-                    Execute the the below task using the tools available.
-                    Task: {task}
-                    """}
+    input_message = {
+        "role": "user", 
+        "content": f"""
+        Execute the the given task using the tools. Pass correct arguments to the tools. Provide the tool output as the final response.
+        Task: {task}
+        """
+    }
+    
     last_message = None
+    tool_output = None
+    
     for step in agent_executor.stream(
         {"messages": [input_message]}, config, stream_mode="values"
     ):
         step["messages"][-1].pretty_print()
-        last_message = step["messages"][-1]
+        msg = step["messages"][-1]
+        last_message = msg
+        
+        # Check if this message is a ToolMessage (result of a tool call)
+        if isinstance(msg, ToolMessage):
+            tool_output = msg.content
     
+    # Priority: Return explicit tool output if we have it
+    if tool_output:
+        return tool_output
+        
     if last_message:
         return last_message.content
     return "Action executed with no output."
