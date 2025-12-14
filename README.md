@@ -7,3 +7,9 @@ Steps to run
 4. docker stop book-stock-service, then curl http://localhost:3001/books/2
     curl command will error out, but the agent will restart the book-stock-service
     following curls will succeed
+
+
+About the project
+-----------------
+
+This project is a proof of concept for using LLMs to automatically resolve errors in microservices.

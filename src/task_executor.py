@@ -16,7 +16,7 @@ config: Any = {"configurable": {"thread_id": "abc123"}}
 def run_agent(task:str):
     input_message = {"role": "user", "content": f"""
                     Execute the the below task using the tools available.
-                    Task: ${task}
+                    Task: {task}
                     """}
     for step in agent_executor.stream(
         {"messages": [input_message]}, config, stream_mode="values"

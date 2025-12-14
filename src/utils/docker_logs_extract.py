@@ -1,15 +1,15 @@
 import docker
 import sys
 
-def stream_container_logs(container_name):
+def get_logs_since(container_name, since_ts):
     client = docker.from_env()
-    print(client.containers.list()[0])
     try:
         container = client.containers.get(container_name)
-        return container.logs(stream=True, follow=True, tail=0)
+        # return logs with timestamps for deduplication
+        return container.logs(stream=False, follow=False, since=since_ts, timestamps=True)
     except docker.errors.NotFound:
         print(f"Container '{container_name}' not found.")
-        sys.exit(1)
+        return b""
     except Exception as e:
         print(f"Error: {e}")
-        sys.exit(1)
+        return b""
